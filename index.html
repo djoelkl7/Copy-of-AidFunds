@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AidFunds</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'primary-red': '#E50914',
+              'primary-dark': '#141414',
+              'primary-gray': '#333333',
+              'light-bg': '#FFFFFF',
+              'light-bg-secondary': '#F9FAFB', // gray-50
+              'light-text': '#111827', // gray-900
+              'light-text-secondary': '#6B7281', // gray-500
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Added for prose styles for AI response */
+      .prose {
+        color: #111827;
+      }
+      .dark .prose-invert {
+        color: #d1d5db;
+      }
+      .prose h1, .prose h2, .prose h3, .prose h4, .prose th {
+        color: inherit;
+      }
+       .prose a {
+        color: #E50914;
+      }
+       .prose strong {
+         color: inherit;
+       }
+       .prose ul > li::before {
+         background-color: #E50914;
+       }
+       .animate-fade-in {
+         animation: fadeIn 0.5s ease-in-out;
+       }
+       @keyframes fadeIn {
+         from { opacity: 0; transform: translateY(10px); }
+         to { opacity: 1; transform: translateY(0); }
+       }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^6.25.1",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^0.15.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-light-bg dark:bg-primary-dark">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
