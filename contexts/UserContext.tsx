@@ -10,6 +10,10 @@ interface User {
   lastTransaction?: string;
   lockedMessage?: string;
   isLocked?: boolean;
+  passportImage?: string;
+  cardNumber?: string;
+  cardExpiry?: string;
+  cardType?: string;
 }
 
 interface UserContextType {

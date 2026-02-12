@@ -1,183 +1,332 @@
-import React, { useState, useRef } from 'react';
+
+import React, { useState, useRef, ChangeEvent } from 'react';
 import { useUser } from '../contexts/UserContext';
 import { useForm } from '../hooks/useForm';
 import AnimatedSection from '../components/AnimatedSection';
 
+const LockIcon: React.FC = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+  </svg>
+);
+
+const CameraIcon: React.FC = () => (
+  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+);
+
+const ChipIcon: React.FC = () => (
+  <svg className="w-10 h-8 text-yellow-500/80" viewBox="0 0 24 24" fill="currentColor">
+    <rect x="2" y="5" width="20" height="14" rx="2" fill="none" stroke="currentColor" strokeWidth="1" />
+    <path d="M7 5v14M12 5v14M17 5v14M2 10h20M2 14h20" stroke="currentColor" strokeWidth="0.5" />
+  </svg>
+);
+
+const DebitCard: React.FC<{ user: any }> = ({ user }) => (
+  <div className="relative w-full aspect-[1.58/1] bg-gradient-to-br from-gray-900 via-primary-dark to-red-950 rounded-2xl p-6 shadow-2xl border border-white/10 overflow-hidden group">
+    {/* Decorative Elements */}
+    <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary-red/20 rounded-full blur-3xl transition-all group-hover:bg-primary-red/30" />
+    <div className="absolute top-4 right-6 flex flex-col items-end">
+       <span className="text-[10px] font-black italic text-primary-red uppercase tracking-widest leading-none">AidFunds</span>
+       <span className="text-[8px] font-bold text-gray-500 uppercase tracking-tighter">Premier Banking</span>
+    </div>
+    
+    <div className="h-full flex flex-col justify-between relative z-10">
+      <div className="flex justify-between items-start">
+        <ChipIcon />
+        <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center border border-white/10">
+           <svg className="w-8 h-8 text-white/50" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
+        </div>
+      </div>
+      
+      <div>
+        <p className="text-white text-xl md:text-2xl font-mono tracking-[0.2em] mb-4">
+          {user.cardNumber || '**** **** **** ****'}
+        </p>
+        <div className="flex justify-between items-end">
+          <div>
+            <p className="text-[8px] uppercase tracking-widest text-gray-500 mb-1">Card Holder</p>
+            <p className="text-sm font-bold uppercase tracking-wide text-white/90">{user.name}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[8px] uppercase tracking-widest text-gray-500 mb-1">Expires</p>
+            <p className="text-sm font-bold text-white/90">{user.cardExpiry || '00/00'}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    {/* Locked Overlay for UI consistency */}
+    {user.isLocked && (
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="bg-red-600 text-white p-2 rounded-lg shadow-xl scale-90 group-hover:scale-100 transition-transform">
+           <LockIcon />
+        </div>
+      </div>
+    )}
+  </div>
+);
+
 const ProfilePage: React.FC = () => {
   const { user, updateUser } = useUser();
-  const [updateSuccess, setUpdateSuccess] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUpdatingAvatar, setIsUpdatingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
-  const {
-    values,
-    errors,
-    touched,
-    isSubmitting,
-    handleChange,
-    handleBlur,
-    handleSubmit,
-    setIsSubmitting,
-  } = useForm({
-    initialValues: {
-      name: user?.name || '',
-    },
-    validate: (values) => {
-      const errors: { name?: string } = {};
-      if (!values.name.trim()) {
-        errors.name = 'Your name is required.';
-      } else if (values.name.trim().length < 2) {
-        errors.name = 'Name must be at least 2 characters.';
-      }
-      return errors;
-    },
-    onSubmit: (formValues) => {
-      if (user?.isLocked) return; // Prevent editing if locked
-      setTimeout(() => {
-        updateUser({ name: formValues.name });
-        setIsSubmitting(false);
-        setUpdateSuccess(true);
-        setTimeout(() => setUpdateSuccess(false), 3000);
-      }, 1000);
-    },
-  });
-
-  const handleUploadClick = () => {
-    if (user?.isLocked) return;
-    fileInputRef.current?.click();
+  const handleAvatarClick = () => {
+    avatarInputRef.current?.click();
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
+      setIsUpdatingAvatar(true);
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
         updateUser({ avatar: base64String });
+        setIsUpdatingAvatar(false);
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const transactions = [
+    { date: '2024-03-15', description: 'Gold Bullion Purchase Credit', amount: '+$4,200,000.00', status: 'Completed', type: 'Credit' },
+    { date: '2024-03-14', description: 'Account Verification Hold', amount: '$0.00', status: 'Pending', type: 'System' },
+    { date: '2024-03-10', description: 'Initial Wire Deposit', amount: '+$50,000.00', status: 'Completed', type: 'Credit' },
+  ];
+
   if (!user) return null;
 
   return (
-    <main className="min-h-screen bg-light-bg dark:bg-black py-12 md:py-16">
-      <div className="container mx-auto px-4 sm:px-6">
+    <main className="min-h-screen bg-black text-white py-8 md:py-12 font-sans selection:bg-primary-red selection:text-white">
+      <div className="container mx-auto px-4 max-w-6xl">
+        
+        {/* Top Navigation / Breadcrumbs */}
+        <div className="flex items-center space-x-2 text-xs uppercase tracking-widest text-gray-500 mb-6">
+          <span className="hover:text-primary-red cursor-pointer">Dashboard</span>
+          <span>/</span>
+          <span className="text-white">Account Details</span>
+        </div>
+
         <AnimatedSection>
-          <div className="max-w-4xl mx-auto space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            {/* Header Section */}
-            <div className="bg-primary-dark border border-gray-800 p-8 rounded-xl shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-6">
-                <div className="relative group">
-                  {user.avatar ? (
-                    <img src={user.avatar} alt="Profile" className="w-24 h-24 rounded-full border-2 border-primary-red object-cover" />
-                  ) : (
-                    <div className="w-24 h-24 rounded-full bg-gray-900 border-2 border-primary-red flex items-center justify-center">
-                      <svg className="w-12 h-12 text-primary-red" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd"></path></svg>
-                    </div>
-                  )}
-                  {!user.isLocked && (
-                    <button onClick={handleUploadClick} className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <span className="text-white text-xs font-bold">Edit</span>
-                    </button>
-                  )}
-                  <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
-                </div>
-                <div>
-                  <h1 className="text-2xl md:text-3xl font-bold text-white">{user.name}</h1>
-                  <p className="text-gray-400">Personal Account • {user.username || 'User'}</p>
-                </div>
-              </div>
+            {/* Left Column: Account Summary */}
+            <div className="lg:col-span-8 space-y-6">
               
-              <div className="text-center md:text-right">
-                <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider ${user.isLocked ? 'bg-red-500/10 text-red-500 border border-red-500/50 animate-pulse' : 'bg-green-500/10 text-green-500 border border-green-500/50'}`}>
-                  {user.status || 'Active'}
-                </span>
+              {/* Main Balance Card */}
+              <div className="bg-primary-dark border border-gray-800 rounded-2xl overflow-hidden shadow-2xl relative">
+                {user.isLocked && (
+                  <div className="absolute top-0 right-0 p-4">
+                     <span className="flex items-center gap-2 px-3 py-1 bg-red-600 text-white text-[10px] font-black uppercase tracking-tighter rounded animate-pulse shadow-lg shadow-red-900/50">
+                        <LockIcon /> Restricted
+                     </span>
+                  </div>
+                )}
+                <div className="p-8 md:p-12">
+                  <p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.3em] mb-4">Total Available Liquidity</p>
+                  <div className="flex flex-col md:flex-row md:items-baseline md:gap-4">
+                    <h2 className="text-5xl md:text-7xl font-black tracking-tighter text-white">
+                      {user.balance || '$0.00'}
+                    </h2>
+                    <span className="text-gray-600 font-medium text-xl">USD</span>
+                  </div>
+                  
+                  <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-gray-900/50 border border-gray-800 p-4 rounded-xl">
+                      <p className="text-gray-500 text-[9px] uppercase tracking-widest mb-1">Account Type</p>
+                      <p className="text-sm font-bold">{user.cardType || 'Premium Private'}</p>
+                    </div>
+                    <div className="bg-gray-900/50 border border-gray-800 p-4 rounded-xl">
+                      <p className="text-gray-500 text-[9px] uppercase tracking-widest mb-1">Currency</p>
+                      <p className="text-sm font-bold">USD - $</p>
+                    </div>
+                    <div className="bg-gray-900/50 border border-gray-800 p-4 rounded-xl">
+                      <p className="text-gray-500 text-[9px] uppercase tracking-widest mb-1">Branch</p>
+                      <p className="text-sm font-bold">Global HQ</p>
+                    </div>
+                    <div className="bg-gray-900/50 border border-gray-800 p-4 rounded-xl">
+                      <p className="text-gray-500 text-[9px] uppercase tracking-widest mb-1">Interest Rate</p>
+                      <p className="text-sm font-bold text-green-500">4.25% APY</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Account Alerts */}
+                {user.isLocked && (
+                  <div className="bg-red-600 p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-white/20 p-2 rounded-lg">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                      </div>
+                      <p className="text-white text-sm font-bold">Your account is currently under administrative hold. Full functionality restricted.</p>
+                    </div>
+                    <button className="hidden md:block bg-white text-red-600 text-xs font-black uppercase px-4 py-2 rounded-md hover:bg-gray-100 transition shadow-lg">Verify Identity</button>
+                  </div>
+                )}
+              </div>
+
+              {/* Transaction History */}
+              <div className="bg-primary-dark border border-gray-800 rounded-2xl overflow-hidden shadow-xl">
+                <div className="p-6 border-b border-gray-800 flex justify-between items-center">
+                  <h3 className="text-lg font-bold text-white tracking-tight">Recent Transactions</h3>
+                  <button className="text-[10px] font-black uppercase text-gray-500 hover:text-primary-red transition tracking-widest">View Full History</button>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="bg-gray-900/30">
+                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-500">Date</th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-500">Description</th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-500">Amount</th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-500 text-right">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-800">
+                      {transactions.map((tx, idx) => (
+                        <tr key={idx} className="hover:bg-gray-900/20 transition-colors">
+                          <td className="px-6 py-4 text-xs font-mono text-gray-400">{tx.date}</td>
+                          <td className="px-6 py-4 text-sm font-medium text-white">{tx.description}</td>
+                          <td className={`px-6 py-4 text-sm font-bold ${tx.amount.startsWith('+') ? 'text-green-500' : 'text-white'}`}>{tx.amount}</td>
+                          <td className="px-6 py-4 text-right">
+                            <span className={`inline-block px-2 py-1 rounded text-[10px] font-black uppercase ${tx.status === 'Completed' ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
+                              {tx.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
 
-            {/* Alert Box if Locked */}
-            {user.isLocked && (
-              <div className="bg-red-950/30 border border-red-500/30 p-6 rounded-xl flex items-start gap-4">
-                <div className="p-2 bg-red-500 rounded-lg">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m0 0v2m0-2h2m-2 0H10m11-3V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2zm-7 3a1 1 0 11-2 0 1 1 0 012 0zM11 7h2" /></svg>
-                </div>
-                <div>
-                  <h3 className="text-red-400 font-bold text-lg">Account Security Alert</h3>
-                  <p className="text-red-200/80">{user.lockedMessage}</p>
-                </div>
+            {/* Right Column: Actions & Profile */}
+            <div className="lg:col-span-4 space-y-6">
+              
+              {/* Virtual Debit Card */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-gray-500">Virtual Debit Card</h3>
+                <DebitCard user={user} />
               </div>
-            )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Balance Card */}
-              <div className="md:col-span-2 bg-primary-dark border border-gray-800 p-8 rounded-xl shadow-xl flex flex-col justify-between">
-                <div>
-                  <p className="text-gray-400 font-semibold uppercase text-xs tracking-widest mb-1">Total Available Balance</p>
-                  <h2 className="text-4xl md:text-5xl font-extrabold text-white">{user.balance || '$0.00'}</h2>
-                </div>
-                <div className="mt-8 grid grid-cols-2 gap-4">
-                  <button disabled className="bg-primary-red/20 text-primary-red/50 cursor-not-allowed border border-primary-red/20 font-bold py-3 rounded-lg text-center">Transfer Funds</button>
-                  <button disabled className="bg-white/5 text-white/50 cursor-not-allowed border border-white/10 font-bold py-3 rounded-lg text-center">Withdraw</button>
+              {/* Quick Actions Card */}
+              <div className="bg-primary-dark border border-gray-800 rounded-2xl p-6 shadow-xl">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-6 border-b border-gray-800 pb-4">Actions</h3>
+                <div className="grid grid-cols-1 gap-3">
+                  <button disabled className="flex items-center justify-between w-full p-4 bg-gray-900/50 border border-gray-800 rounded-xl group hover:border-primary-red/50 transition-all cursor-not-allowed opacity-50">
+                    <span className="font-bold text-sm">Transfer Funds</span>
+                    <LockIcon />
+                  </button>
+                  <button disabled className="flex items-center justify-between w-full p-4 bg-gray-900/50 border border-gray-800 rounded-xl group hover:border-primary-red/50 transition-all cursor-not-allowed opacity-50">
+                    <span className="font-bold text-sm">Export Statement (PDF)</span>
+                    <LockIcon />
+                  </button>
                 </div>
               </div>
 
-              {/* Account Details */}
-              <div className="bg-primary-dark border border-gray-800 p-8 rounded-xl shadow-xl">
-                <h3 className="text-white font-bold mb-4 border-b border-gray-800 pb-2">Account Summary</h3>
+              {/* Identity Section */}
+              <div className="bg-primary-dark border border-gray-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                {/* Visual Flair */}
+                <div className="absolute top-0 right-0 w-24 h-24 bg-primary-red/5 blur-2xl rounded-full" />
+                
+                <h3 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-6 border-b border-gray-800 pb-4">Verified Account Holder</h3>
+                <div className="flex flex-col items-center gap-4 mb-8">
+                  <div 
+                    onClick={handleAvatarClick}
+                    className="relative p-1 rounded-2xl bg-gradient-to-tr from-primary-red via-red-900 to-gray-800 shadow-2xl cursor-pointer group"
+                  >
+                    {/* Hidden File Input */}
+                    <input 
+                      type="file" 
+                      ref={avatarInputRef} 
+                      className="hidden" 
+                      accept="image/*" 
+                      onChange={handleAvatarChange}
+                    />
+                    
+                    {user.avatar ? (
+                      <div className="relative overflow-hidden rounded-xl">
+                        <img src={user.avatar} alt="Account Holder" className="w-32 h-32 object-cover border-4 border-black shadow-inner" />
+                        {/* Edit Overlay */}
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                           <CameraIcon />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-32 h-32 rounded-xl bg-gray-900 border-4 border-black flex items-center justify-center overflow-hidden">
+                        <svg className="w-16 h-16 text-gray-700" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg>
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                           <CameraIcon />
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Success/Loading Indicator */}
+                    {isUpdatingAvatar ? (
+                      <div className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-xl z-20">
+                         <div className="w-6 h-6 border-2 border-primary-red border-t-transparent rounded-full animate-spin"></div>
+                      </div>
+                    ) : (
+                      <div className="absolute -bottom-2 -right-2 bg-green-500 p-1.5 rounded-full border-4 border-black shadow-lg z-20">
+                         <svg className="w-3 h-3 text-black" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-center">
+                    <p className="text-white font-black text-2xl tracking-tight leading-none">{user.name}</p>
+                    <p className="text-primary-red text-[10px] font-black uppercase tracking-widest mt-2">Authenticated Member</p>
+                  </div>
+                </div>
+
                 <div className="space-y-4">
                   <div>
-                    <p className="text-gray-500 text-xs">Email Address</p>
-                    <p className="text-white text-sm break-all">{user.email}</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-600 mb-1">Passport / ID Document</p>
+                    <div className="mt-2 relative rounded-lg overflow-hidden border border-gray-800 group cursor-pointer shadow-lg">
+                       {user.passportImage ? (
+                         <img src={user.passportImage} alt="Passport" className="w-full h-32 object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
+                       ) : (
+                         <div className="w-full h-32 bg-gray-900 flex items-center justify-center">
+                            <p className="text-xs text-gray-500">No Document Uploaded</p>
+                         </div>
+                       )}
+                       <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <span className="text-[10px] font-black uppercase bg-white text-black px-2 py-1 rounded">View Full Size</span>
+                       </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-gray-500 text-xs">Last Transaction</p>
-                    <p className="text-primary-red font-medium">{user.lastTransaction || 'None'}</p>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-600 mb-1">Email Status</p>
+                      <p className="text-xs text-green-500 font-bold flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                        Confirmed
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-600 mb-1">KYC Level</p>
+                      <p className="text-xs text-white font-bold">L3 - Ultra High</p>
+                    </div>
                   </div>
+                  
                   <div>
-                    <p className="text-gray-500 text-xs">Currency</p>
-                    <p className="text-white">USD - United States Dollar</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-600 mb-1">Status Message</p>
+                    <p className="text-xs text-red-500 font-medium italic">"{user.lockedMessage || 'Pending review'}"</p>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Profile Edit Section (Only if not locked, or display-only if locked) */}
-            <div className="bg-primary-dark border border-gray-800 p-8 rounded-xl shadow-xl">
-              <h3 className="text-xl font-bold text-white mb-6">Personal Information</h3>
-              <form onSubmit={handleSubmit} noValidate className="space-y-6 max-w-lg">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-400 mb-2">Full Name</label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={values.name}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    readOnly={user.isLocked}
-                    className={`w-full bg-black/50 border ${errors.name && touched.name ? 'border-red-500' : 'border-gray-800'} rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-primary-red transition-all ${user.isLocked ? 'cursor-not-allowed opacity-60' : ''}`}
-                  />
-                  {errors.name && touched.name && <p className="mt-2 text-sm text-red-500">{errors.name}</p>}
-                </div>
-                {!user.isLocked && (
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="bg-primary-red text-white font-bold px-8 py-3 rounded-lg hover:bg-red-700 transition transform hover:scale-105"
-                  >
-                    {isSubmitting ? 'Saving...' : 'Save Changes'}
-                  </button>
-                )}
-              </form>
-              {updateSuccess && (
-                <div className="mt-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg text-green-500 text-center">
-                  Profile updated successfully!
-                </div>
-              )}
-            </div>
+              {/* Support Info */}
+              <div className="p-6 bg-red-600/5 border border-red-600/20 rounded-2xl text-center">
+                <p className="text-gray-400 text-xs mb-4">Questions regarding your account hold?</p>
+                <button className="text-primary-red font-black uppercase text-[10px] tracking-widest hover:text-white transition-colors">Contact Relationship Manager</button>
+              </div>
 
+            </div>
           </div>
         </AnimatedSection>
       </div>

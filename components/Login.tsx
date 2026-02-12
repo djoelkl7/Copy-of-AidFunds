@@ -65,15 +65,25 @@ const Login: React.FC = () => {
             balance: '$4,200,000.00',
             status: 'Temporarily Locked',
             lastTransaction: 'Gold Payment',
-            lockedMessage: 'Account temporarily locked. Please visit nearest branch.',
+            lockedMessage: 'Account temporarily locked. Please visit nearest branch to verify high-value asset transfer.',
             isLocked: true,
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Dolmat'
+            // Using a representative portrait of an older man to match user's provided image
+            avatar: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?auto=format&fit=crop&q=80&w=400&h=400',
+            passportImage: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?auto=format&fit=crop&w=400&h=250&q=80',
+            cardNumber: '4200 8821 9901 0023',
+            cardExpiry: '12/28',
+            cardType: 'Infinite Gold'
           });
         } else {
           login({ 
             email: formValues.email, 
             name: 'Sarah Johnson',
-            isLocked: false
+            isLocked: false,
+            balance: '$1,250.00',
+            status: 'Active',
+            cardNumber: '4532 1102 3349 9081',
+            cardExpiry: '05/26',
+            cardType: 'Standard'
           });
         }
         
