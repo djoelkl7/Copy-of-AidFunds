@@ -14,7 +14,7 @@ const AIFinancialAdvisor: React.FC = () => {
     const [useThinkingMode, setUseThinkingMode] = useState(false);
 
     // State for new goal inputs
-    const [investmentGoal, setInvestmentGoal] = useState('Retirement');
+    const [investmentGoal, setInvestmentGoal] = useState('');
     const [targetAmount, setTargetAmount] = useState('');
     const [timeline, setTimeline] = useState('');
 
@@ -27,27 +27,40 @@ const AIFinancialAdvisor: React.FC = () => {
         setError('');
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+            const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+            const modelName = useThinkingMode ? 'gemini-3.1-pro-preview' : 'gemini-3-flash-preview';
             
-            const model = useThinkingMode ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
-            const config = useThinkingMode ? { thinkingConfig: { thinkingBudget: 32768 } } : {};
+            let goalContextParts = [];
+            if (investmentGoal) goalContextParts.push(`Goal: ${investmentGoal}`);
+            if (targetAmount) goalContextParts.push(`Target Amount: $${Number(targetAmount).toLocaleString()}`);
+            if (timeline) goalContextParts.push(`Timeline: ${timeline} years`);
             
-            let goalContext = '';
-            if (targetAmount && timeline) {
-                goalContext = `My financial goal is for ${investmentGoal}. I want to reach a target of $${targetAmount.toLocaleString()} in ${timeline} years.`;
-            }
+            const goalContext = goalContextParts.length > 0 
+                ? `User's Financial Context: ${goalContextParts.join(', ')}.` 
+                : '';
+
+            const prompt = `As an expert financial advisor for a company called AidFundsCapital, answer the following user query about investment plans and financial strategies. 
+            The user is on a page displaying three investment plans: 
+            1. 'Starter Growth' (low risk, 5-7% returns, min $500)
+            2. 'Dynamic Momentum' (medium risk, 8-12% returns, min $5,000)
+            3. 'Aggressive Alpha' (high risk, 15%+ returns, min $25,000)
+
+            ${goalContext}
+
+            User's query: "${query}"
+
+            Provide a helpful, insightful, and well-structured response using Markdown for formatting (e.g., headings, bold text, lists). Be specific and reference the plans if they are relevant to the user's goal.`;
 
             const result = await ai.models.generateContent({
-                model: model,
-                contents: `As an expert financial advisor for a company called AidFunds, answer the following user query about investment plans and financial strategies. The user is on a page displaying three investment plans: 'Starter Growth' (low risk), 'Dynamic Momentum' (medium risk), and 'Aggressive Alpha' (high risk). Consider the user's specific financial goals if provided. Provide a helpful, insightful, and well-structured response using Markdown for formatting (e.g., headings, bold text, lists). User's goals: "${goalContext}". User's query: "${query}"`,
-                config: config,
+                model: modelName,
+                contents: prompt,
             });
 
-            setResponse(result.text);
+            setResponse(result.text || 'No response generated.');
 
         } catch (err) {
             console.error(err);
-            setError('Sorry, I encountered an error while processing your request. The model may be overloaded. Please try again later.');
+            setError('Sorry, I encountered an error while processing your request. Please try again later.');
         } finally {
             setIsLoading(false);
         }
@@ -73,7 +86,7 @@ const AIFinancialAdvisor: React.FC = () => {
                             <div className={`block ${useThinkingMode ? 'bg-primary-red' : 'bg-gray-300 dark:bg-gray-600'} w-14 h-8 rounded-full transition-colors duration-300`}></div>
                             <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-300 ${useThinkingMode ? 'translate-x-6' : ''}`}></div>
                         </div>
-                        <span className="ml-3 text-sm font-medium text-light-text-secondary dark:text-gray-300">Deep Analysis (slower)</span>
+                        <span className="ml-3 text-sm font-medium text-light-text-secondary dark:text-gray-300">Deep Analysis</span>
                     </label>
                 </div>
 
@@ -89,10 +102,12 @@ const AIFinancialAdvisor: React.FC = () => {
                                 onChange={(e) => setInvestmentGoal(e.target.value)}
                                 className="w-full bg-gray-100 dark:bg-primary-dark border border-gray-300 dark:border-gray-600 rounded-md p-3 text-light-text dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-red transition duration-300"
                             >
-                                <option>Retirement</option>
-                                <option>House Down Payment</option>
-                                <option>General Wealth Growth</option>
-                                <option>Other</option>
+                                <option value="">Select a goal (optional)</option>
+                                <option value="Retirement">Retirement</option>
+                                <option value="House Down Payment">House Down Payment</option>
+                                <option value="General Wealth Growth">General Wealth Growth</option>
+                                <option value="Education">Education</option>
+                                <option value="Other">Other</option>
                             </select>
                         </div>
                          <div>
@@ -103,6 +118,7 @@ const AIFinancialAdvisor: React.FC = () => {
                                 value={targetAmount}
                                 onChange={(e) => setTargetAmount(e.target.value)}
                                 placeholder="e.g., 500000"
+                                min="0"
                                 className="w-full bg-gray-100 dark:bg-primary-dark border border-gray-300 dark:border-gray-600 rounded-md p-3 text-light-text dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-red transition duration-300"
                             />
                         </div>
@@ -114,6 +130,7 @@ const AIFinancialAdvisor: React.FC = () => {
                                 value={timeline}
                                 onChange={(e) => setTimeline(e.target.value)}
                                 placeholder="e.g., 20"
+                                min="0"
                                 className="w-full bg-gray-100 dark:bg-primary-dark border border-gray-300 dark:border-gray-600 rounded-md p-3 text-light-text dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-red transition duration-300"
                             />
                         </div>
@@ -138,7 +155,7 @@ const AIFinancialAdvisor: React.FC = () => {
                     >
                         {isLoading ? (
                             <>
-                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>

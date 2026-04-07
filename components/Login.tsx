@@ -90,7 +90,7 @@ const Login: React.FC = () => {
         setIsSubmitting(false);
         setSubmitSuccess(true);
         setTimeout(() => {
-          navigate('/profile'); // Direct to profile to see the state
+          navigate('/dashboard'); // Direct to dashboard
         }, 1000);
       }, 1500);
     },
@@ -99,7 +99,7 @@ const Login: React.FC = () => {
   return (
     <section className="min-h-screen bg-light-bg dark:bg-primary-dark flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-         <Link to="/" className="inline-block" aria-label="AidFunds homepage">
+         <Link to="/" className="inline-block" aria-label="AidFundsCapital homepage">
           <Logo />
         </Link>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-light-text dark:text-white">

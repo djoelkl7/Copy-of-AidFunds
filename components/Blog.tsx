@@ -57,31 +57,45 @@ const blogPosts: BlogPost[] = [
   },
 ];
 
-const BlogCard: React.FC<{ post: BlogPost }> = ({ post }) => (
-    <div className="bg-light-bg-secondary dark:bg-primary-gray rounded-lg shadow-lg hover:shadow-2xl overflow-hidden h-full flex flex-col transform hover:-translate-y-2 transition-all duration-300">
-        <a href={post.slug} className="block" aria-label={`Read more about ${post.title}`}>
-            <img src={post.image} alt="" className="w-full h-48 object-cover" />
-        </a>
-        <div className="p-6 flex flex-col flex-grow">
-            <div className="mb-4">
-                <span className="inline-block bg-primary-red/10 dark:bg-primary-red/20 text-primary-red text-xs font-semibold rounded-full px-3 py-1">
-                    {post.category}
-                </span>
-            </div>
-            <h3 className="text-xl font-bold mb-2 text-light-text dark:text-white leading-snug">
-                <a href={post.slug} className="hover:text-primary-red transition-colors duration-200">{post.title}</a>
-            </h3>
-            <p className="text-light-text-secondary dark:text-gray-400 text-sm flex-grow mb-6">{post.summary}</p>
-            <div className="flex items-center mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
-                <img className="w-10 h-10 rounded-full mr-3 object-cover" src={post.author.avatar} alt={post.author.name} />
-                <div>
-                    <p className="font-semibold text-light-text dark:text-gray-200 text-sm">{post.author.name}</p>
-                    <p className="text-xs text-light-text-secondary dark:text-gray-500">{post.date}</p>
+const BlogCard: React.FC<{ post: BlogPost }> = ({ post }) => {
+    const calculateReadTime = (text: string) => {
+        const wordsPerMinute = 200;
+        const words = text.trim().split(/\s+/).length;
+        const minutes = Math.ceil(words / wordsPerMinute);
+        return minutes;
+    };
+
+    const readTime = calculateReadTime(post.summary);
+
+    return (
+        <div className="bg-light-bg-secondary dark:bg-primary-gray rounded-lg shadow-lg hover:shadow-2xl overflow-hidden h-full flex flex-col transform hover:-translate-y-2 transition-all duration-300">
+            <a href={post.slug} className="block" aria-label={`Read more about ${post.title}`}>
+                <img src={post.image} alt="" className="w-full h-48 object-cover" />
+            </a>
+            <div className="p-6 flex flex-col flex-grow">
+                <div className="mb-4 flex justify-between items-center">
+                    <span className="inline-block bg-primary-red/10 dark:bg-primary-red/20 text-primary-red text-xs font-semibold rounded-full px-3 py-1">
+                        {post.category}
+                    </span>
+                    <span className="text-[10px] uppercase tracking-widest font-bold text-gray-500 dark:text-gray-400">
+                        {readTime} min read
+                    </span>
+                </div>
+                <h3 className="text-xl font-bold mb-2 text-light-text dark:text-white leading-snug">
+                    <a href={post.slug} className="hover:text-primary-red transition-colors duration-200">{post.title}</a>
+                </h3>
+                <p className="text-light-text-secondary dark:text-gray-400 text-sm flex-grow mb-6">{post.summary}</p>
+                <div className="flex items-center mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <img className="w-10 h-10 rounded-full mr-3 object-cover" src={post.author.avatar} alt={post.author.name} />
+                    <div>
+                        <p className="font-semibold text-light-text dark:text-gray-200 text-sm">{post.author.name}</p>
+                        <p className="text-xs text-light-text-secondary dark:text-gray-500">{post.date}</p>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 const Blog: React.FC = () => {
   return (

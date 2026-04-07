@@ -13,7 +13,7 @@ const CTA: React.FC = () => {
             Ready to Start Your Financial Journey?
           </h2>
           <p className="text-light-text-secondary dark:text-gray-300 max-w-2xl mx-auto mb-8 text-base sm:text-lg">
-            Join thousands of successful investors who trust AidFunds to grow their wealth. Sign up today and take the first step towards financial freedom.
+            Join thousands of successful investors who trust AidFundsCapital to grow their wealth. Sign up today and take the first step towards financial freedom.
           </p>
         </AnimatedSection>
         <AnimatedSection delay={100}>

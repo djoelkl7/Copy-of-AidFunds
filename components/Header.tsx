@@ -65,9 +65,9 @@ const Header: React.FC = () => {
   return (
     <header className="bg-white/80 dark:bg-black/80 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-200 dark:border-primary-gray">
       <div className="container mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
-        <a href="#home" className="text-2xl" aria-label="AidFunds homepage">
+        <Link to="/" className="text-2xl" aria-label="AidFundsCapital homepage">
           <Logo />
-        </a>
+        </Link>
         <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
           {navLinks.map((link) => (
             <a key={link.name} href={link.href} className="text-light-text-secondary dark:text-gray-300 hover:text-light-text dark:hover:text-white transition duration-300">
@@ -86,7 +86,10 @@ const Header: React.FC = () => {
                     <p className="text-sm text-light-text-secondary dark:text-gray-400">Signed in as</p>
                     <p className="text-sm font-medium text-light-text dark:text-white truncate">{user.name}</p>
                   </div>
-                  <Link to="/profile" onClick={() => setIsProfileOpen(false)} className="block px-4 py-2 text-sm text-light-text-secondary dark:text-gray-300 hover:bg-light-bg-secondary dark:hover:bg-gray-700 w-full text-left transition-colors duration-200">
+                  <Link to="/dashboard" onClick={() => setIsProfileOpen(false)} className="block px-4 py-2 text-sm text-light-text-secondary dark:text-gray-300 hover:bg-light-bg-secondary dark:hover:bg-gray-700 w-full text-left transition-colors duration-200">
+                      Dashboard
+                  </Link>
+                  <Link to="/dashboard/profile" onClick={() => setIsProfileOpen(false)} className="block px-4 py-2 text-sm text-light-text-secondary dark:text-gray-300 hover:bg-light-bg-secondary dark:hover:bg-gray-700 w-full text-left transition-colors duration-200">
                       Your Profile
                   </Link>
                   <button onClick={handleLogout} className="block px-4 py-2 text-sm text-light-text-secondary dark:text-gray-300 hover:bg-light-bg-secondary dark:hover:bg-gray-700 w-full text-left transition-colors duration-200">
@@ -122,7 +125,10 @@ const Header: React.FC = () => {
             ))}
             {user ? (
                <div className="w-full text-center border-t border-gray-200 dark:border-gray-700 pt-4 mt-2 space-y-4">
-                <Link to="/profile" onClick={() => setIsMenuOpen(false)} className="block text-light-text-secondary dark:text-gray-300 hover:text-light-text dark:hover:text-white transition duration-300">
+                <Link to="/dashboard" onClick={() => setIsMenuOpen(false)} className="block text-light-text-secondary dark:text-gray-300 hover:text-light-text dark:hover:text-white transition duration-300">
+                    Dashboard
+                </Link>
+                <Link to="/dashboard/profile" onClick={() => setIsMenuOpen(false)} className="block text-light-text-secondary dark:text-gray-300 hover:text-light-text dark:hover:text-white transition duration-300">
                     Your Profile
                 </Link>
                  <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="w-full text-center bg-primary-red text-white font-semibold px-5 py-2 rounded-md hover:bg-red-700 transition-all duration-300 transform hover:scale-105">

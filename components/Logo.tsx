@@ -25,7 +25,7 @@ const Logo: React.FC = () => {
         />
       </svg>
       <span className="font-bold text-light-text dark:text-white">
-        Aid<span className="text-primary-red">Funds</span>
+        Aid<span className="text-primary-red">FundsCapital</span>
       </span>
     </div>
   );

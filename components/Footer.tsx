@@ -95,7 +95,7 @@ const Footer: React.FC = () => {
         </div>
         <AnimatedSection delay={750}>
           <div className="border-t border-gray-200 dark:border-primary-gray pt-8 text-center">
-            <p>&copy; {new Date().getFullYear()} AidFunds. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} AidFundsCapital. All rights reserved.</p>
           </div>
         </AnimatedSection>
       </div>

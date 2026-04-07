@@ -19,7 +19,7 @@ const TestimonialCard: React.FC<{ quote: string; name: string; title: string; av
 const Testimonials: React.FC = () => {
   const testimonials = [
     {
-      quote: 'AidFunds has completely changed my perspective on investing. The platform is intuitive, and the returns have been fantastic!',
+      quote: 'AidFundsCapital has completely changed my perspective on investing. The platform is intuitive, and the returns have been fantastic!',
       name: 'Sarah Johnson',
       title: 'Entrepreneur',
       avatar: 'https://picsum.photos/100/100?random=2'
@@ -31,7 +31,7 @@ const Testimonials: React.FC = () => {
       avatar: 'https://picsum.photos/100/100?random=3'
     },
     {
-      quote: 'As someone new to investing, I was hesitant. But AidFunds made it so easy to get started. I highly recommend it to anyone.',
+      quote: 'As someone new to investing, I was hesitant. But AidFundsCapital made it so easy to get started. I highly recommend it to anyone.',
       name: 'Jessica Williams',
       title: 'Marketing Manager',
       avatar: 'https://picsum.photos/100/100?random=4'

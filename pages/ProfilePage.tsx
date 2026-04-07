@@ -29,7 +29,7 @@ const DebitCard: React.FC<{ user: any }> = ({ user }) => (
     {/* Decorative Elements */}
     <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary-red/20 rounded-full blur-3xl transition-all group-hover:bg-primary-red/30" />
     <div className="absolute top-4 right-6 flex flex-col items-end">
-       <span className="text-[10px] font-black italic text-primary-red uppercase tracking-widest leading-none">AidFunds</span>
+       <span className="text-[10px] font-black italic text-primary-red uppercase tracking-widest leading-none">AidFundsCapital</span>
        <span className="text-[8px] font-bold text-gray-500 uppercase tracking-tighter">Premier Banking</span>
     </div>
     
@@ -72,24 +72,85 @@ const DebitCard: React.FC<{ user: any }> = ({ user }) => (
 const ProfilePage: React.FC = () => {
   const { user, updateUser } = useUser();
   const [isUpdatingAvatar, setIsUpdatingAvatar] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [editName, setEditName] = useState(user?.name || '');
+  const [isSavingName, setIsSavingName] = useState(false);
+  const [previewAvatar, setPreviewAvatar] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const handleAvatarClick = () => {
+    if (isUpdatingAvatar) return;
     avatarInputRef.current?.click();
   };
+
+  const handleSaveName = async () => {
+    if (!editName.trim()) return;
+    setIsSavingName(true);
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    updateUser({ name: editName });
+    setIsSavingName(false);
+  };
+
+  const isNameChanged = editName !== user?.name;
 
   const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setIsUpdatingAvatar(true);
+      // Basic validation
+      if (!file.type.startsWith('image/')) {
+        setUploadError('Please select an image file.');
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        setUploadError('Image size must be less than 2MB.');
+        return;
+      }
+
+      setUploadError(null);
+      
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64String = reader.result as string;
-        updateUser({ avatar: base64String });
-        setIsUpdatingAvatar(false);
+        setPreviewAvatar(reader.result as string);
+      };
+      reader.onerror = () => {
+        setUploadError('Failed to read file.');
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleConfirmAvatar = async () => {
+    if (!previewAvatar) return;
+    
+    setIsUpdatingAvatar(true);
+    setUploadProgress(0);
+
+    // Simulate upload progress
+    const duration = 1500;
+    const interval = 50;
+    const steps = duration / interval;
+    const increment = 100 / steps;
+
+    for (let i = 0; i <= steps; i++) {
+      await new Promise(resolve => setTimeout(resolve, interval));
+      setUploadProgress(Math.min(Math.round(i * increment), 100));
+    }
+
+    updateUser({ avatar: previewAvatar });
+    setIsUpdatingAvatar(false);
+    setPreviewAvatar(null);
+    setUploadProgress(0);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000);
+  };
+
+  const handleCancelAvatar = () => {
+    setPreviewAvatar(null);
+    setUploadProgress(0);
+    if (avatarInputRef.current) avatarInputRef.current.value = '';
   };
 
   const transactions = [
@@ -101,16 +162,8 @@ const ProfilePage: React.FC = () => {
   if (!user) return null;
 
   return (
-    <main className="min-h-screen bg-black text-white py-8 md:py-12 font-sans selection:bg-primary-red selection:text-white">
-      <div className="container mx-auto px-4 max-w-6xl">
-        
-        {/* Top Navigation / Breadcrumbs */}
-        <div className="flex items-center space-x-2 text-xs uppercase tracking-widest text-gray-500 mb-6">
-          <span className="hover:text-primary-red cursor-pointer">Dashboard</span>
-          <span>/</span>
-          <span className="text-white">Account Details</span>
-        </div>
-
+    <div className="p-6 md:p-10 font-sans selection:bg-primary-red selection:text-white">
+      <div className="container mx-auto max-w-6xl">
         <AnimatedSection>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
@@ -248,37 +301,104 @@ const ProfilePage: React.FC = () => {
                       onChange={handleAvatarChange}
                     />
                     
-                    {user.avatar ? (
+                    {previewAvatar || user.avatar ? (
                       <div className="relative overflow-hidden rounded-xl">
-                        <img src={user.avatar} alt="Account Holder" className="w-32 h-32 object-cover border-4 border-black shadow-inner" />
+                        <img src={previewAvatar || user.avatar} alt="Account Holder" className={`w-32 h-32 object-cover border-4 ${previewAvatar ? 'border-primary-red' : 'border-black'} shadow-inner transition-all`} />
                         {/* Edit Overlay */}
-                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                           <CameraIcon />
-                        </div>
+                        {!previewAvatar && !isUpdatingAvatar && (
+                          <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                             <CameraIcon />
+                             <span className="text-[8px] font-black uppercase tracking-tighter text-white mt-1">Change Photo</span>
+                          </div>
+                        )}
                       </div>
                     ) : (
-                      <div className="w-32 h-32 rounded-xl bg-gray-900 border-4 border-black flex items-center justify-center overflow-hidden">
+                      <div className="w-32 h-32 rounded-xl bg-gray-900 border-4 border-black flex flex-col items-center justify-center overflow-hidden">
                         <svg className="w-16 h-16 text-gray-700" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg>
-                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                           <CameraIcon />
-                        </div>
+                        {!previewAvatar && !isUpdatingAvatar && (
+                          <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                             <CameraIcon />
+                             <span className="text-[8px] font-black uppercase tracking-tighter text-white mt-1">Upload Photo</span>
+                          </div>
+                        )}
                       </div>
                     )}
                     
                     {/* Success/Loading Indicator */}
-                    {isUpdatingAvatar ? (
-                      <div className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-xl z-20">
-                         <div className="w-6 h-6 border-2 border-primary-red border-t-transparent rounded-full animate-spin"></div>
+                    {isUpdatingAvatar && (
+                      <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center rounded-xl z-20">
+                         <div className="w-6 h-6 border-2 border-primary-red border-t-transparent rounded-full animate-spin mb-2"></div>
+                         <div className="w-20 h-1 bg-gray-800 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-primary-red transition-all duration-300" 
+                              style={{ width: `${uploadProgress}%` }}
+                            />
+                         </div>
+                         <span className="text-[8px] font-black text-white mt-1">{uploadProgress}%</span>
                       </div>
-                    ) : (
+                    )}
+
+                    {showSuccess && !isUpdatingAvatar && (
+                      <div className="absolute inset-0 bg-green-500/80 flex items-center justify-center rounded-xl z-20 animate-in fade-in zoom-in duration-300">
+                         <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+                      </div>
+                    )}
+                    
+                    {!isUpdatingAvatar && !showSuccess && !previewAvatar && (
                       <div className="absolute -bottom-2 -right-2 bg-green-500 p-1.5 rounded-full border-4 border-black shadow-lg z-20">
                          <svg className="w-3 h-3 text-black" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
                       </div>
                     )}
                   </div>
-                  <div className="text-center">
-                    <p className="text-white font-black text-2xl tracking-tight leading-none">{user.name}</p>
+
+                  {previewAvatar && !isUpdatingAvatar && (
+                    <div className="flex gap-2 w-full px-8">
+                      <button 
+                        onClick={handleConfirmAvatar}
+                        className="flex-1 bg-green-600 text-white text-[10px] font-black uppercase tracking-widest py-2 rounded-lg hover:bg-green-700 transition-all shadow-lg"
+                      >
+                        Confirm
+                      </button>
+                      <button 
+                        onClick={handleCancelAvatar}
+                        className="flex-1 bg-gray-800 text-white text-[10px] font-black uppercase tracking-widest py-2 rounded-lg hover:bg-gray-700 transition-all border border-gray-700"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+
+                  {uploadError && (
+                    <p className="text-red-500 text-[10px] font-bold uppercase tracking-tighter animate-pulse">{uploadError}</p>
+                  )}
+                  <div className="text-center w-full px-4">
+                    <div className="relative group/name">
+                      <input 
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="w-full bg-transparent text-white font-black text-2xl tracking-tight leading-none text-center border-b-2 border-transparent focus:border-primary-red focus:outline-none transition-all py-1"
+                        placeholder="Full Name"
+                      />
+                      <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover/name:opacity-100 transition-opacity pointer-events-none">
+                        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                      </div>
+                    </div>
                     <p className="text-primary-red text-[10px] font-black uppercase tracking-widest mt-2">Authenticated Member</p>
+                    
+                    {isNameChanged && (
+                      <button 
+                        onClick={handleSaveName}
+                        disabled={isSavingName}
+                        className="mt-4 w-full bg-primary-red text-white text-[10px] font-black uppercase tracking-widest py-2 rounded-lg hover:bg-red-700 transition-all shadow-lg shadow-red-900/20 flex items-center justify-center gap-2"
+                      >
+                        {isSavingName ? (
+                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          'Save Changes'
+                        )}
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -330,7 +450,7 @@ const ProfilePage: React.FC = () => {
           </div>
         </AnimatedSection>
       </div>
-    </main>
+    </div>
   );
 };
 
