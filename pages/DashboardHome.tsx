@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useUser } from '../contexts/UserContext';
 import AnimatedSection from '../components/AnimatedSection';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   AreaChart, 
   Area, 
@@ -26,17 +27,22 @@ const data = [
 ];
 
 const transactions = [
-  { id: 1, name: 'Apple Store', date: 'Oct 24, 2023', amount: '-$999.00', status: 'Completed', type: 'Shopping' },
-  { id: 2, name: 'Salary Deposit', date: 'Oct 22, 2023', amount: '+$5,400.00', status: 'Completed', type: 'Income' },
-  { id: 3, name: 'Netflix Subscription', date: 'Oct 20, 2023', amount: '-$15.99', status: 'Pending', type: 'Entertainment' },
-  { id: 4, name: 'Starbucks Coffee', date: 'Oct 19, 2023', amount: '-$6.50', status: 'Completed', type: 'Food' },
-  { id: 5, name: 'Rent Payment', date: 'Oct 15, 2023', amount: '-$1,200.00', status: 'Completed', type: 'Housing' },
+  { id: 'TXN-8821-001', name: 'Apple Store', date: 'Oct 24, 2023', fullDate: 'October 24, 2023 at 02:34 PM', amount: '-$999.00', status: 'Completed', type: 'Shopping', location: 'Cupertino, CA', method: 'Apple Pay' },
+  { id: 'TXN-8821-002', name: 'Salary Deposit', date: 'Oct 22, 2023', fullDate: 'October 22, 2023 at 09:00 AM', amount: '+$5,400.00', status: 'Completed', type: 'Income', location: 'Remote Transfer', method: 'Direct Deposit' },
+  { id: 'TXN-8821-003', name: 'Netflix Subscription', date: 'Oct 20, 2023', fullDate: 'October 20, 2023 at 11:15 PM', amount: '-$15.99', status: 'Pending', type: 'Entertainment', location: 'Online', method: 'Recurring Card' },
+  { id: 'TXN-8821-004', name: 'Starbucks Coffee', date: 'Oct 19, 2023', fullDate: 'October 19, 2023 at 08:45 AM', amount: '-$6.50', status: 'Completed', type: 'Food', location: 'Seattle, WA', method: 'Visa Debit' },
+  { id: 'TXN-8821-005', name: 'Rent Payment', date: 'Oct 15, 2023', fullDate: 'October 15, 2023 at 12:00 AM', amount: '-$1,200.00', status: 'Completed', type: 'Housing', location: 'Bank Transfer', method: 'ACH' },
 ];
 
 const DashboardHome: React.FC = () => {
   const { user } = useUser();
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
   if (!user) return null;
+
+  const toggleRow = (id: string) => {
+    setExpandedRowId(expandedRowId === id ? null : id);
+  };
 
   return (
     <div className="p-4 md:p-8 space-y-8 bg-black min-h-full">
@@ -155,29 +161,85 @@ const DashboardHome: React.FC = () => {
                   </thead>
                   <tbody className="divide-y divide-gray-800">
                     {transactions.map((tx) => (
-                      <tr key={tx.id} className="hover:bg-gray-900/50 transition-colors group">
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-bold text-white group-hover:text-primary-red transition-colors">{tx.name}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-xs text-gray-500 font-medium">{tx.type}</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-xs text-gray-500 font-medium">{tx.date}</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`text-sm font-black ${tx.amount.startsWith('+') ? 'text-green-500' : 'text-white'}`}>
-                            {tx.amount}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-tighter ${
-                            tx.status === 'Completed' ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'
-                          }`}>
-                            {tx.status}
-                          </span>
-                        </td>
-                      </tr>
+                      <React.Fragment key={tx.id}>
+                        <tr 
+                          onClick={() => toggleRow(tx.id)}
+                          className={`cursor-pointer hover:bg-gray-900/50 transition-colors group ${expandedRowId === tx.id ? 'bg-gray-900/80' : ''}`}
+                        >
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-2 h-2 rounded-full transition-all duration-300 ${expandedRowId === tx.id ? 'bg-primary-red scale-125' : 'bg-transparent'}`} />
+                              <p className="text-sm font-bold text-white group-hover:text-primary-red transition-colors">{tx.name}</p>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-xs text-gray-500 font-medium">{tx.type}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-xs text-gray-500 font-medium">{tx.date}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`text-sm font-black ${tx.amount.startsWith('+') ? 'text-green-500' : 'text-white'}`}>
+                              {tx.amount}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center justify-between">
+                              <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-tighter ${
+                                tx.status === 'Completed' ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'
+                              }`}>
+                                {tx.status}
+                              </span>
+                              <svg 
+                                className={`w-4 h-4 text-gray-600 transition-transform duration-300 ${expandedRowId === tx.id ? 'rotate-180 text-primary-red' : ''}`} 
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </div>
+                          </td>
+                        </tr>
+                        <AnimatePresence>
+                          {expandedRowId === tx.id && (
+                            <tr>
+                              <td colSpan={5} className="p-0 border-none">
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                  className="overflow-hidden bg-gray-900/30"
+                                >
+                                  <div className="px-12 py-6 grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-gray-800/50">
+                                    <div className="space-y-1">
+                                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Transaction ID</p>
+                                      <p className="text-xs font-mono text-white tracking-wider">{tx.id}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Full Timestamp</p>
+                                      <p className="text-xs font-bold text-white">{tx.fullDate}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Location & Method</p>
+                                      <p className="text-xs font-bold text-white">{tx.location} • {tx.method}</p>
+                                    </div>
+                                    <div className="md:col-span-3 pt-4 flex gap-4">
+                                      <button className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-[10px] font-black uppercase tracking-widest text-white rounded-lg transition-all">
+                                        Download Receipt
+                                      </button>
+                                      <button className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-[10px] font-black uppercase tracking-widest text-white rounded-lg transition-all">
+                                        Report Issue
+                                      </button>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              </td>
+                            </tr>
+                          )}
+                        </AnimatePresence>
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
