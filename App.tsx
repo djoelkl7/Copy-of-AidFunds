@@ -8,6 +8,11 @@ import ForgotPassword from './components/ForgotPassword';
 import ProfilePage from './pages/ProfilePage';
 import UsersPage from './pages/UsersPage';
 import DashboardHome from './pages/DashboardHome';
+import AccountsPage from './pages/AccountsPage';
+import TransfersPage from './pages/TransfersPage';
+import CardsPage from './pages/CardsPage';
+import PaymentsPage from './pages/PaymentsPage';
+import LoansPage from './pages/LoansPage';
 import DashboardLayout from './components/DashboardLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -49,6 +54,11 @@ const App: React.FC = () => {
               <Route index element={<DashboardHome />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="users" element={<UsersPage />} />
+              <Route path="accounts" element={<AccountsPage />} />
+              <Route path="transfers" element={<TransfersPage />} />
+              <Route path="cards" element={<CardsPage />} />
+              <Route path="payments" element={<PaymentsPage />} />
+              <Route path="loans" element={<LoansPage />} />
             </Route>
 
             {/* Legacy Redirects */}
