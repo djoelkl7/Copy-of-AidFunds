@@ -37,6 +37,8 @@ const transactions = [
 const DashboardHome: React.FC = () => {
   const { user } = useUser();
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<string>('All');
+  const [activeAction, setActiveAction] = useState<string | null>(null);
 
   if (!user) return null;
 
@@ -44,8 +46,66 @@ const DashboardHome: React.FC = () => {
     setExpandedRowId(expandedRowId === id ? null : id);
   };
 
+  const filteredTransactions = transactions.filter(tx => 
+    filterType === 'All' || tx.type === filterType
+  );
+
+  const transactionTypes = ['All', ...new Set(transactions.map(tx => tx.type))];
+
+  const handleActionSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Simulate action
+    alert(`${activeAction} successful!`);
+    setActiveAction(null);
+  };
+
   return (
-    <div className="p-4 md:p-8 space-y-8 bg-black min-h-full">
+    <div className="p-4 md:p-8 space-y-8 bg-black min-h-full relative font-sans">
+      {/* Quick Action Modal */}
+      <AnimatePresence>
+        {activeAction && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-primary-dark border border-gray-800 rounded-3xl p-8 shadow-2xl w-full max-w-md"
+            >
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl font-black text-white tracking-tight">{activeAction}</h2>
+                <button onClick={() => setActiveAction(null)} className="text-gray-500 hover:text-white transition-colors">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              
+              <form onSubmit={handleActionSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">
+                    {activeAction === 'Send Money' ? 'Recipient Account / Email' : 
+                     activeAction === 'Pay Bills' ? 'Biller Name' : 
+                     activeAction === 'Top Up' ? 'Source Account' : 'From Whom?'}
+                  </label>
+                  <input required type="text" className="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-primary-red transition-all" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Amount (USD)</label>
+                  <input required type="number" placeholder="0.00" className="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-primary-red transition-all" />
+                </div>
+                {activeAction === 'Send Money' && (
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Reference / Note</label>
+                    <textarea className="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-primary-red transition-all h-24" />
+                  </div>
+                )}
+                <button type="submit" className="w-full bg-primary-red text-white py-4 rounded-xl font-bold text-sm tracking-widest uppercase hover:bg-red-700 transition-all shadow-lg shadow-red-900/40">
+                  Confirm {activeAction}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Account Summary */}
       <AnimatedSection>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -144,9 +204,25 @@ const DashboardHome: React.FC = () => {
           {/* Transactions Section */}
           <AnimatedSection delay={400}>
             <div className="bg-primary-dark border border-gray-800 rounded-3xl overflow-hidden shadow-xl">
-              <div className="p-6 border-b border-gray-800 flex items-center justify-between">
+              <div className="p-6 border-b border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <h3 className="text-lg font-bold text-white tracking-tight">Recent Transactions</h3>
-                <button className="text-primary-red text-xs font-black uppercase tracking-widest hover:text-red-400 transition-colors">View All</button>
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <select 
+                      value={filterType}
+                      onChange={(e) => setFilterType(e.target.value)}
+                      className="bg-gray-900 border border-gray-800 text-[10px] font-black uppercase tracking-widest text-gray-400 px-4 py-2 rounded-xl focus:outline-none focus:border-primary-red transition-all appearance-none pr-10"
+                    >
+                      {transactionTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ) )}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-600">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                  </div>
+                  <button className="text-primary-red text-[10px] font-black uppercase tracking-widest hover:text-red-400 transition-colors">View All</button>
+                </div>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
@@ -160,8 +236,9 @@ const DashboardHome: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800">
-                    {transactions.map((tx) => (
-                      <React.Fragment key={tx.id}>
+                    {filteredTransactions.length > 0 ? (
+                      filteredTransactions.map((tx) => (
+                        <React.Fragment key={tx.id}>
                         <tr 
                           onClick={() => toggleRow(tx.id)}
                           className={`cursor-pointer hover:bg-gray-900/50 transition-colors group ${expandedRowId === tx.id ? 'bg-gray-900/80' : ''}`}
@@ -240,7 +317,14 @@ const DashboardHome: React.FC = () => {
                           )}
                         </AnimatePresence>
                       </React.Fragment>
-                    ))}
+                    ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-20 text-center text-gray-600 font-bold italic">
+                          No transactions found for the selected filter.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -260,7 +344,11 @@ const DashboardHome: React.FC = () => {
                   { name: 'Top Up', icon: 'M12 6v6m0 0v6m0-6h6m-6 0H6' },
                   { name: 'Request', icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4' },
                 ].map((action) => (
-                  <button key={action.name} className="flex flex-col items-center justify-center p-4 bg-gray-900/50 border border-gray-800 rounded-2xl hover:border-primary-red/50 transition-all group">
+                  <button 
+                    key={action.name} 
+                    onClick={() => setActiveAction(action.name)}
+                    className="flex flex-col items-center justify-center p-4 bg-gray-900/50 border border-gray-800 rounded-2xl hover:border-primary-red/50 transition-all group"
+                  >
                     <div className="w-10 h-10 bg-primary-red/10 rounded-full flex items-center justify-center mb-3 group-hover:bg-primary-red/20 transition-all">
                       <svg className="w-5 h-5 text-primary-red" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={action.icon} /></svg>
                     </div>
