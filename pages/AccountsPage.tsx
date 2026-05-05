@@ -3,10 +3,16 @@ import React, { useState, useMemo } from 'react';
 import AnimatedSection from '../components/AnimatedSection';
 import { useUser } from '../contexts/UserContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { AreaChart, Area, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
 
 const chartData = [
-  { val: 400 }, { val: 300 }, { val: 600 }, { val: 800 }, { val: 500 }, { val: 900 }, { val: 1100 }
+  { day: 'Mon', val: 400 }, 
+  { day: 'Tue', val: 300 }, 
+  { day: 'Wed', val: 600 }, 
+  { day: 'Thu', val: 800 }, 
+  { day: 'Fri', val: 500 }, 
+  { day: 'Sat', val: 900 }, 
+  { day: 'Sun', val: 1100 }
 ];
 
 const AccountsPage: React.FC = () => {
@@ -26,7 +32,11 @@ const AccountsPage: React.FC = () => {
       currency: 'USD',
       interest: '0.05%',
       opened: 'Jan 12, 2020',
-      trend: chartData
+      trend: chartData,
+      limits: {
+        dailyTransfer: { max: 50000, current: 12500 },
+        dailyWithdrawal: { max: 5000, current: 800 }
+      }
     },
     { 
       id: '2', 
@@ -38,7 +48,11 @@ const AccountsPage: React.FC = () => {
       currency: 'USD',
       interest: '4.25%',
       opened: 'Mar 05, 2021',
-      trend: chartData.map(d => ({ val: d.val * 1.2 }))
+      trend: chartData.map(d => ({ val: d.val * 1.2 })),
+      limits: {
+        dailyTransfer: { max: 100000, current: 0 },
+        dailyWithdrawal: { max: 20000, current: 1200 }
+      }
     },
     { 
       id: '3', 
@@ -50,7 +64,11 @@ const AccountsPage: React.FC = () => {
       currency: 'XAU',
       interest: 'N/A',
       opened: 'Jun 20, 2018',
-      trend: chartData.map(d => ({ val: d.val * 0.8 }))
+      trend: chartData.map(d => ({ val: d.val * 0.8 })),
+      limits: {
+        dailyTransfer: { max: 500000, current: 50000 },
+        dailyWithdrawal: { max: 100000, current: 0 }
+      }
     },
     { 
       id: '4', 
@@ -62,7 +80,11 @@ const AccountsPage: React.FC = () => {
       currency: 'BTC/ETH',
       interest: '8.50%',
       opened: 'Sep 15, 2022',
-      trend: chartData.map(d => ({ val: d.val * 1.5 }))
+      trend: chartData.map(d => ({ val: d.val * 1.5 })),
+      limits: {
+        dailyTransfer: { max: 25000, current: 4200 },
+        dailyWithdrawal: { max: 10000, current: 0 }
+      }
     },
   ], [user]);
 
@@ -151,10 +173,32 @@ const AccountsPage: React.FC = () => {
                   </div>
 
                   <div className="flex items-center gap-8 w-full md:w-auto justify-between md:justify-end">
-                    <div className="hidden lg:block w-32 h-10">
+                    <div className="hidden lg:block w-32 h-10" onClick={(e) => e.stopPropagation()}>
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={account.trend}>
-                          <Area type="monotone" dataKey="val" stroke="#E50914" fill="#E50914" fillOpacity={0.1} strokeWidth={2} />
+                          <Tooltip 
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                return (
+                                  <div className="bg-black/90 border border-gray-800 p-2 rounded-lg shadow-2xl backdrop-blur-sm">
+                                    <p className="text-[8px] font-black uppercase tracking-widest text-gray-500 mb-0.5">{payload[0].payload.day}</p>
+                                    <p className="text-xs font-black text-white">${payload[0].value?.toLocaleString()}</p>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Area 
+                            type="monotone" 
+                            dataKey="val" 
+                            stroke="#E50914" 
+                            fill="#E50914" 
+                            fillOpacity={0.1} 
+                            strokeWidth={2} 
+                            dot={false}
+                            activeDot={{ r: 4, fill: '#E50914', stroke: '#000', strokeWidth: 2 }}
+                          />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
@@ -195,6 +239,50 @@ const AccountsPage: React.FC = () => {
                         <div className="space-y-1">
                           <p className="text-[10px] font-black uppercase tracking-widest text-gray-600">Relationship Since</p>
                           <p className="text-sm font-bold text-white">{account.opened}</p>
+                        </div>
+
+                        {/* Limits Section */}
+                        <div className="md:col-span-4 border-t border-gray-800 pt-8 mt-4">
+                          <div className="flex justify-between items-center mb-6">
+                            <h4 className="text-sm font-black uppercase tracking-widest text-white">Account Limits</h4>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                alert('Limit increase request submitted for review.');
+                              }}
+                              className="text-[10px] font-black uppercase tracking-widest text-primary-red hover:text-red-400 transition-colors"
+                            >
+                              Request Limit Increase
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-3">
+                              <div className="flex justify-between items-end">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Daily Transfer Limit</p>
+                                <p className="text-xs font-bold text-white">${account.limits.dailyTransfer.current.toLocaleString()} / ${account.limits.dailyTransfer.max.toLocaleString()}</p>
+                              </div>
+                              <div className="w-full h-1.5 bg-gray-900 rounded-full overflow-hidden">
+                                <motion.div 
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${(account.limits.dailyTransfer.current / account.limits.dailyTransfer.max) * 100}%` }}
+                                  className="h-full bg-primary-red shadow-[0_0_10px_rgba(229,9,20,0.5)]"
+                                />
+                              </div>
+                            </div>
+                            <div className="space-y-3">
+                              <div className="flex justify-between items-end">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Daily Withdrawal Limit</p>
+                                <p className="text-xs font-bold text-white">${account.limits.dailyWithdrawal.current.toLocaleString()} / ${account.limits.dailyWithdrawal.max.toLocaleString()}</p>
+                              </div>
+                              <div className="w-full h-1.5 bg-gray-900 rounded-full overflow-hidden">
+                                <motion.div 
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${(account.limits.dailyWithdrawal.current / account.limits.dailyWithdrawal.max) * 100}%` }}
+                                  className="h-full bg-primary-red shadow-[0_0_10px_rgba(229,9,20,0.5)]"
+                                />
+                              </div>
+                            </div>
+                          </div>
                         </div>
 
                         <div className="md:col-span-4 flex flex-wrap gap-4 pt-4">
